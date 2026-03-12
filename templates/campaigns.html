@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Campaigns - Brazen Beauties AI Platform{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h1 style="font-size: 28px; color: #141413;">Event Marketing Campaigns</h1>
+</div>
+
+<div class="alert alert-info">
+    <div style="font-size: 20px;">🎯</div>
+    <div>
+        AI-powered event marketing that identifies local jewelry enthusiasts, runs targeted campaigns, 
+        and automatically nurtures leads from awareness through purchase.
+    </div>
+</div>
+
+<div style="margin-bottom: 32px;">
+    <div class="card">
+        <h3 style="font-size: 18px; color: #141413; margin-bottom: 16px;">Create New Campaign with AI</h3>
+        <form id="campaignForm" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+            <div>
+                <label class="field-label">Event Name</label>
+                <input type="text" id="eventName" placeholder="e.g., Rittenhouse Square Fine Arts Festival" required>
+            </div>
+            <div>
+                <label class="field-label">Event Date</label>
+                <input type="date" id="eventDate" required>
+            </div>
+            <div>
+                <label class="field-label">Target Location</label>
+                <input type="text" id="targetLocation" placeholder="e.g., Philadelphia, PA" required>
+            </div>
+            <div>
+                <label class="field-label">Target Interests</label>
+                <input type="text" id="targetInterests" placeholder="e.g., luxury jewelry, permanent jewelry, gemstones" required>
+            </div>
+            <div style="grid-column: 1 / -1;">
+                <button type="submit" class="btn-primary">Generate Campaign Strategy</button>
+            </div>
+        </form>
+        <div id="campaignResult" style="margin-top: 20px; display: none;">
+            <div class="section-label">Generated Campaign Strategy</div>
+            <div style="background: #f0efe9; border-radius: 8px; padding: 16px; white-space: pre-line; font-size: 14px; line-height: 1.5;"></div>
+        </div>
+    </div>
+</div>
+
+<div class="section-label">Active Campaigns</div>
+<div style="display: grid; gap: 20px;">
+    {% for campaign in campaigns %}
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+            <div>
+                <h3 style="font-size: 18px; color: #141413; margin-bottom: 4px;">{{ campaign.name }}</h3>
+                <p style="color: #4a4845; font-size: 14px;">{{ campaign.description }}</p>
+            </div>
+            <span class="badge badge-{% if campaign.status == 'active' %}green{% elif campaign.status == 'paused' %}orange{% else %}gray{% endif %}">
+                {{ campaign.status }}
+            </span>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 20px;">
+            <div style="text-align: center;">
+                <div style="font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 18px; color: #141413;">{{ "{:,.0f}".format(campaign.reach) }}</div>
+                <div style="font-size: 11px; color: #b0aea5; text-transform: uppercase;">Reach</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 18px; color: #141413;">{{ campaign.clicks }}</div>
+                <div style="font-size: 11px; color: #b0aea5; text-transform: uppercase;">Clicks</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 18px; color: #141413;">{{ campaign.leads_generated }}</div>
+                <div style="font-size: 11px; color: #b0aea5; text-transform: uppercase;">Leads</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 18px; color: #141413;">${{ "{:,.0f}".format(campaign.spend) }}</div>
+                <div style="font-size: 11px; color: #b0aea5; text-transform: uppercase;">Spend</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 18px; color: #d97757;">{{ campaign.conversion_rate }}%</div>
+                <div style="font-size: 11px; color: #b0aea5; text-transform: uppercase;">CVR</div>
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+            <div style="font-size: 12px; color: #b0aea5; margin-bottom: 4px;">Campaign Performance</div>
+            <div style="background: #f0efe9; height: 6px; border-radius: 3px; overflow: hidden;">
+                <div style="background: #d97757; height: 100%; width: {{ campaign.performance_score }}%; border-radius: 3px;"></div>
+            </div>
+            <div style="font-size: 12px; color: #4a4845; margin-top: 4px;">{{ campaign.performance_score }}% performance score</div>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-size: 13px; color: #4a4845;">
+                <strong>Target:</strong> {{ campaign.target_audience }} • 
+                <strong>Duration:</strong> {{ campaign.duration }}
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <a href="/campaigns/{{ campaign.id }}" class="btn-primary">View Details</a>
+                <button class="btn-secondary">Edit</button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+document.getElementById('campaignForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const eventName = document.getElementById('eventName').value;
+    const eventDate = document.getElementById('eventDate').value;
+    const targetLocation = document.getElementById('targetLocation').value;
+    const targetInterests = document.getElementById('targetInterests').value;
+    
+    const resultDiv = document.getElementById('campaignResult');
+    const contentDiv = resultDiv.querySelector('div:last-child');
+    
+    // Show loading
+    resultDiv.style.display = 'block';
+    contentDiv.innerHTML = `
+        <div style="text-align: center; padding: 20px; color: #d97757;">
+            <div style="font-size: 32px; margin-bottom: 12px;">⏳</div>
+            AI is creating your campaign strategy...
+        </div>
+    `;
+    
+    try {
+        const formData = new FormData();
+        formData.append('event_name', eventName);
+        formData.append('event_date', eventDate);
+        formData.append('target_location', targetLocation);
+        formData.append('target_interests', targetInterests);
+        
+        const response = await fetch('/create_campaign', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.error) {
+            contentDiv.innerHTML = `<div style="color: #c0463a;">Error: ${result.error}</div>`;
+        } else {
+            contentDiv.innerHTML = result.campaign_strategy;
+        }
+    } catch (error) {
+        contentDiv.innerHTML = `<div style="color: #c0463a;">Failed to generate strategy. Please try again.</div>`;
+    }
+});
+</script>
+{% endblock %}

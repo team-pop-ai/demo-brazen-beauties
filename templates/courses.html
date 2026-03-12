@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Courses - Brazen Beauties AI Platform{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h1 style="font-size: 28px; color: #141413;">Gemology Course Platform</h1>
+</div>
+
+<div class="alert alert-info">
+    <div style="font-size: 20px;">✨</div>
+    <div>
+        Transform your 25 years of certified gemology expertise into automated revenue. 
+        Students learn at their own pace while you focus on high-value custom jewelry consultations.
+    </div>
+</div>
+
+<div style="margin-bottom: 32px;">
+    <div class="card">
+        <h3 style="font-size: 18px; color: #141413; margin-bottom: 16px;">Generate New Course Content with AI</h3>
+        <form id="courseForm" style="display: grid; gap: 16px;">
+            <div>
+                <label class="field-label">Course Topic</label>
+                <input type="text" id="courseTopic" placeholder="e.g., Advanced Diamond Grading Techniques" required>
+            </div>
+            <div>
+                <button type="submit" class="btn-primary">Generate Course Outline with AI</button>
+            </div>
+        </form>
+        <div id="courseResult" style="margin-top: 20px; display: none;">
+            <div class="section-label">Generated Course Content</div>
+            <div style="background: #f0efe9; border-radius: 8px; padding: 16px; white-space: pre-line; font-size: 14px; line-height: 1.5;"></div>
+        </div>
+    </div>
+</div>
+
+<div class="section-label">Active Courses</div>
+<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+    {% for course in courses %}
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+            <h3 style="font-size: 18px; color: #141413;">{{ course.title }}</h3>
+            <span class="badge badge-{% if course.status == 'active' %}green{% elif course.status == 'draft' %}orange{% else %}gray{% endif %}">
+                {{ course.status }}
+            </span>
+        </div>
+        
+        <p style="color: #4a4845; margin-bottom: 16px; font-size: 14px; line-height: 1.5;">{{ course.description }}</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;">
+            <div style="text-align: center;">
+                <div style="font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 20px; color: #d97757;">{{ course.lessons }}</div>
+                <div style="font-size: 11px; color: #b0aea5; text-transform: uppercase;">Lessons</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 20px; color: #d97757;">${{ course.price }}</div>
+                <div style="font-size: 11px; color: #b0aea5; text-transform: uppercase;">Price</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 20px; color: #d97757;">{{ course.enrolled }}</div>
+                <div style="font-size: 11px; color: #b0aea5; text-transform: uppercase;">Students</div>
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+            <div style="font-size: 12px; color: #b0aea5; margin-bottom: 4px;">Course Progress Overview</div>
+            <div style="background: #f0efe9; height: 6px; border-radius: 3px; overflow: hidden;">
+                <div style="background: #d97757; height: 100%; width: {{ course.completion_rate }}%; border-radius: 3px;"></div>
+            </div>
+            <div style="font-size: 12px; color: #4a4845; margin-top: 4px;">{{ course.completion_rate }}% average completion rate</div>
+        </div>
+        
+        <div style="display: flex; gap: 12px;">
+            <a href="/courses/{{ course.id }}" class="btn-primary">View Details</a>
+            <button class="btn-secondary">Edit Course</button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+document.getElementById('courseForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const topic = document.getElementById('courseTopic').value;
+    const resultDiv = document.getElementById('courseResult');
+    const contentDiv = resultDiv.querySelector('div:last-child');
+    
+    // Show loading
+    resultDiv.style.display = 'block';
+    contentDiv.innerHTML = `
+        <div style="text-align: center; padding: 20px; color: #d97757;">
+            <div style="font-size: 32px; margin-bottom: 12px;">⏳</div>
+            AI is creating your course content...
+        </div>
+    `;
+    
+    try {
+        const formData = new FormData();
+        formData.append('course_topic', topic);
+        
+        const response = await fetch('/generate_course_content', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.error) {
+            contentDiv.innerHTML = `<div style="color: #c0463a;">Error: ${result.error}</div>`;
+        } else {
+            contentDiv.innerHTML = result.course_content;
+        }
+    } catch (error) {
+        contentDiv.innerHTML = `<div style="color: #c0463a;">Failed to generate content. Please try again.</div>`;
+    }
+});
+</script>
+{% endblock %}

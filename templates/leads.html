@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Leads - Brazen Beauties AI Platform{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h1 style="font-size: 28px; color: #141413;">Lead Management</h1>
+</div>
+
+<div class="alert alert-info">
+    <div style="font-size: 20px;">🔥</div>
+    <div>
+        AI-powered lead nurturing with personalized follow-up sequences based on each prospect's jewelry interests and engagement level.
+    </div>
+</div>
+
+<div style="margin-bottom: 32px;">
+    <div class="card">
+        <h3 style="font-size: 18px; color: #141413; margin-bottom: 16px;">Generate Personalized Follow-up</h3>
+        <form id="followupForm" style="display: grid; gap: 16px;">
+            <div>
+                <label class="field-label">Lead ID</label>
+                <select id="leadId" required>
+                    <option value="">Select a lead...</option>
+                    {% for lead in new_leads + contacted %}
+                    <option value="{{ lead.id }}">{{ lead.name }} - {{ lead.interests }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="field-label">Lead Context & Notes</label>
+                <textarea id="leadContext" rows="3" placeholder="e.g., Interested in diamond engagement rings, attending Philadelphia event, asked about certification..." required></textarea>
+            </div>
+            <div>
+                <button type="submit" class="btn-primary">Generate AI Follow-up Message</button>
+            </div>
+        </form>
+        <div id="followupResult" style="margin-top: 20px; display: none;">
+            <div class="section-label">Generated Follow-up Message</div>
+            <div style="background: #f0efe9; border-radius: 8px; padding: 16px; white-space: pre-line; font-size: 14px; line-height: 1.5;"></div>
+        </div>
+    </div>
+</div>
+
+<div class="metrics-row">
+    <div class="metric-card">
+        <div class="section-label">New Leads</div>
+        <div class="metric-value">{{ new_leads|length }}</div>
+        <div class="metric-label">need first contact</div>
+    </div>
+    <div class="metric-card">
+        <div class="section-label">Contacted</div>
+        <div class="metric-value">{{ contacted|length }}</div>
+        <div class="metric-label">in follow-up</div>
+    </div>
+    <div class="metric-card">
+        <div class="section-label">Qualified</div>
+        <div class="metric-value">{{ qualified|length }}</div>
+        <div class="metric-label">ready to convert</div>
+    </div>
+    <div class="metric-card">
+        <div class="section-label">Total Pipeline</div>
+        <div class="metric-value">{{ total_leads }}</div>
+        <div class="metric-label">all leads</div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+    <div>
+        <div class="section-label">New Leads</div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Contact</th>
+                        <th>Source</th>
+                        <th>Interests</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lead in new_leads %}
+                    <tr>
+                        <td>
+                            <strong>{{ lead.name }}</strong><br>
+                            <small style="color: #b0aea5;">{{ lead.phone }}</small>
+                        </td>
+                        <td><span class="badge badge-blue">{{ lead.source }}</span></td>
+                        <td style="font-size: 13px;">{{ lead.interests }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div>
+        <div class="section-label">In Follow-up</div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Contact</th>
+                        <th>Source</th>
+                        <th>Last Contact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lead in contacted %}
+                    <tr>
+                        <td>
+                            <strong>{{ lead.name }}</strong><br>
+                            <small style="color: #b0aea5;">{{ lead.phone }}</small>
+                        </td>
+                        <td><span class="badge badge-orange">{{ lead.source }}</span></td>
+                        <td style="font-family: monospace; font-size: 12px;">{{ lead.last_contact }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div>
+        <div class="section-label">Qualified Leads</div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Contact</th>
+                        <th>Value</th>
+                        <th>Next Step</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lead in qualified %}
+                    <tr>
+                        <td>
+                            <strong>{{ lead.name }}</strong><br>
+                            <small style="color: #b0aea5;">{{ lead.phone }}</small>
+                        </td>
+                        <td style="font-family: monospace; color: #d97757; font-weight: 600;">${{ "{:,.0f}".format(lead.estimated_value) }}</td>
+                        <td style="font-size: 13px;">{{ lead.next_action }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('followupForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const leadId = document.getElementById('leadId').value;
+    const leadContext = document.getElementById('leadContext').value;
+    
+    const resultDiv = document.getElementById('followupResult');
+    const contentDiv = resultDiv.querySelector('div:last-child');
+    
+    // Show loading
+    resultDiv.style.display = 'block';
+    contentDiv.innerHTML = `
+        <div style="text-align: center; padding: 20px; color: #d97757;">
+            <div style="font-size: 32px; margin-bottom: 12px;">⏳</div>
+            AI is crafting your personalized follow-up message...
+        </div>
+    `;
+    
+    try {
+        const formData = new FormData();
+        formData.append('lead_id', leadId);
+        formData.append('lead_context', leadContext);
+        
+        const response = await fetch('/generate_followup', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.error) {
+            contentDiv.innerHTML = `<div style="color: #c0463a;">Error: ${result.error}</div>`;
+        } else {
+            contentDiv.innerHTML = result.followup_message;
+        }
+    } catch (error) {
+        contentDiv.innerHTML = `<div style="color: #c0463a;">Failed to generate follow-up. Please try again.</div>`;
+    }
+});
+</script>
+{% endblock %}

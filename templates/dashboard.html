@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Brazen Beauties AI Platform{% endblock %}
+
+{% block content %}
+<h1 style="font-size: 28px; color: #141413; margin-bottom: 24px;">Brazen Beauties AI Platform</h1>
+
+<div class="alert alert-info">
+    <div style="font-size: 20px;">💎</div>
+    <div>
+        <strong>Welcome to your AI-powered jewelry education platform!</strong>
+        Transform your 25 years of gemology expertise into scalable digital revenue while automating event marketing and lead nurturing.
+    </div>
+</div>
+
+<div class="metrics-row">
+    <div class="metric-card">
+        <div class="section-label">Course Students</div>
+        <div class="metric-value">{{ total_students }}</div>
+        <div class="metric-label">active learners</div>
+    </div>
+    <div class="metric-card">
+        <div class="section-label">Active Courses</div>
+        <div class="metric-value">{{ active_courses }}</div>
+        <div class="metric-label">gemology topics</div>
+    </div>
+    <div class="metric-card">
+        <div class="section-label">Total Leads</div>
+        <div class="metric-value">{{ total_leads }}</div>
+        <div class="metric-label">from campaigns</div>
+    </div>
+    <div class="metric-card">
+        <div class="section-label">Course Revenue</div>
+        <div class="metric-value">${{ "{:,.0f}".format(course_revenue) }}</div>
+        <div class="metric-label">this month</div>
+    </div>
+</div>
+
+<div class="two-col">
+    <div>
+        <div class="section-label">Recent Course Enrollments</div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Course</th>
+                        <th>Progress</th>
+                        <th>Enrolled</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in recent_students %}
+                    <tr>
+                        <td><strong>{{ student.name }}</strong><br><small style="color: #b0aea5;">{{ student.email }}</small></td>
+                        <td>{{ student.enrolled_courses[0] if student.enrolled_courses else "N/A" }}</td>
+                        <td>
+                            <span class="badge badge-{% if student.progress >= 80 %}green{% elif student.progress >= 40 %}orange{% else %}gray{% endif %}">
+                                {{ student.progress }}%
+                            </span>
+                        </td>
+                        <td style="font-family: monospace; font-size: 13px;">{{ student.enrolled_date }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div style="margin-top: 16px;">
+            <a href="/courses" class="btn-secondary">View All Courses →</a>
+        </div>
+    </div>
+    
+    <div>
+        <div class="section-label">Recent Campaign Leads</div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Lead</th>
+                        <th>Source</th>
+                        <th>Status</th>
+                        <th>Captured</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lead in recent_leads %}
+                    <tr>
+                        <td><strong>{{ lead.name }}</strong><br><small style="color: #b0aea5;">{{ lead.phone }}</small></td>
+                        <td>{{ lead.source }}</td>
+                        <td>
+                            <span class="badge badge-{% if lead.status == 'qualified' %}green{% elif lead.status == 'contacted' %}orange{% else %}gray{% endif %}">
+                                {{ lead.status }}
+                            </span>
+                        </td>
+                        <td style="font-family: monospace; font-size: 13px;">{{ lead.captured_date }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div style="margin-top: 16px;">
+            <a href="/leads" class="btn-secondary">View All Leads →</a>
+        </div>
+    </div>
+</div>
+
+<div style="margin-top: 32px;">
+    <div class="section-label">Active Marketing Campaigns</div>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+        {% for campaign in social_campaigns %}
+        <div class="card">
+            <h3 style="font-size: 16px; color: #141413; margin-bottom: 8px;">{{ campaign.name }}</h3>
+            <p style="font-size: 14px; color: #4a4845; margin-bottom: 12px;">{{ campaign.description }}</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span class="badge badge-{% if campaign.status == 'active' %}green{% elif campaign.status == 'paused' %}orange{% else %}gray{% endif %}">
+                    {{ campaign.status }}
+                </span>
+                <span style="font-family: monospace; font-size: 13px; color: #b0aea5;">${{ "{:,.0f}".format(campaign.spend) }}</span>
+            </div>
+            <div style="font-size: 13px; color: #4a4845;">
+                <strong>{{ campaign.leads_generated }}</strong> leads • 
+                <strong>{{ campaign.reach }}</strong> reach
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div style="margin-top: 16px;">
+        <a href="/campaigns" class="btn-primary">View All Campaigns</a>
+    </div>
+</div>
+
+{% if voice_agent_active %}
+<div style="margin-top: 32px;">
+    <div class="alert alert-success">
+        <div style="font-size: 20px;">📞</div>
+        <div>
+            <strong>Voice Agent is Live!</strong>
+            Your AI phone assistant is handling jewelry inquiries and appointment bookings 24/7.
+            <a href="/voice-agent" style="color: #4a6a3a; font-weight: 600;">View Details →</a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
